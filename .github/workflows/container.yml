@@ -1,0 +1,103 @@
+name: Container image
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Test application
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m pytest tests -q
+          node --check static/app.js
+          node --test tests/test_label_size.cjs
+      - name: Validate Compose configurations
+        env:
+          QUTIE_USB_GID: '7'
+          QUTIE_MAC: 'AA:BB:CC:DD:EE:FF'
+        run: |
+          docker compose -f compose.yaml config --quiet
+          docker compose -f compose.yaml -f compose.usb.yaml config --quiet
+          docker compose -f compose.bluetooth.yaml config --quiet
+      - name: Build disposable test image
+        run: docker build --tag qutie-studio:test .
+      - name: Test HTTP API and persistent data across container restart
+        run: bash scripts/test-container.sh qutie-studio:test
+
+  publish:
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set image name
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish amd64 and arm64 image
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          provenance: true
+          cache-from: type=gha,scope=qutie-studio
+          cache-to: type=gha,mode=max,scope=qutie-studio
+      - name: Verify published platforms and record digest
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw > /tmp/qutie-manifest.json
+          python - <<'PY'
+          import json
+          with open('/tmp/qutie-manifest.json') as f:
+              manifests = json.load(f)['manifests']
+          platforms = {(m['platform']['os'], m['platform']['architecture']) for m in manifests}
+          assert {('linux', 'amd64'), ('linux', 'arm64')} <= platforms, platforms
+          print('Published manifest includes linux/amd64 and linux/arm64')
+          PY
+          echo '### Published image' >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$IMAGE@$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Tags: latest and the source commit SHA.' >> "$GITHUB_STEP_SUMMARY"

@@ -42,6 +42,9 @@ dist/
 /*.zip
 /artifacts/
 /.publish/
+/backups/
+*.tar.gz
+*.tgz
 
 # Editor, operating-system and assistant state
 .vscode/

@@ -1,0 +1,24 @@
+# Allowlist: local data and credentials never enter the build context.
+**
+!Dockerfile
+!requirements.txt
+!app.py
+!printer.py
+!README.md
+!THIRD_PARTY_NOTICES.md
+!static/
+!static/**
+!vendor/
+!vendor/qutie-linux/
+!vendor/qutie-linux/LICENSE
+!vendor/qutie-linux/src/
+!vendor/qutie-linux/src/**
+**/__pycache__/
+**/*.py[cod]
+**/.env
+**/.env.*
+**/*.local.env
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx

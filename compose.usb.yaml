@@ -1,0 +1,9 @@
+# Linux-only override; use together with compose.yaml.
+services:
+  qutie:
+    devices:
+      - "${QUTIE_USB_DEVICE:-/dev/usb/lp0}:${QUTIE_USB_DEVICE:-/dev/usb/lp0}:rw"
+    group_add:
+      - "${QUTIE_USB_GID:?Set QUTIE_USB_GID to the numeric group ID of your USB printer device}"
+    volumes:
+      - /sys:/sys:ro

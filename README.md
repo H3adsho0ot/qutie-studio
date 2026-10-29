@@ -15,6 +15,7 @@ already available locally. The interface is in English.
 - [Printer compatibility](#printer-compatibility)
 - [Windows quick start](#windows-quick-start)
 - [Designing and printing](#designing-and-printing)
+- [Docker](#docker)
 - [Raspberry Pi installation](#raspberry-pi-installation)
 - [Configuration](#configuration)
 - [Data, backups and migration](#data-backups-and-migration)
@@ -137,6 +138,26 @@ Exports embed their images and can be imported on another server.
 The header refreshes printer status on opening and every 30 seconds. Hardware
 queries are cached for 15 seconds across browsers and pause during printing.
 Disconnected printers hide the previous battery reading.
+
+## Docker
+
+Prebuilt Linux images are published to **`ghcr.io/h3adsho0ot/qutie-studio:latest`**
+for **amd64** and **arm64** (64-bit Raspberry Pi OS). To start the editor:
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+Open http://localhost:8765. The base configuration has no printer passthrough.
+For printing, use the supplied **Linux USB override** or **standalone Linux
+Bluetooth configuration**. Both keep templates in a persistent volume and run
+without privileged mode. Physical container printing still needs hardware testing;
+native Windows USB is the tested setup.
+
+See [the Docker guide](docs/docker.md) for hardware access, LAN binding, updates,
+data migration and building your own image. Docker Desktop does not provide the
+Windows USB/Bluetooth transport used by the native application.
 
 ## Raspberry Pi installation
 
@@ -318,6 +339,10 @@ app.py                      FastAPI API, persistence, rendering and job queue
 printer.py                  Shared printer API with Windows/Linux USB and Linux Bluetooth
 start.ps1                   Windows launcher
 qutie.service               Raspberry Pi systemd service
+Dockerfile                  Non-root Linux image for amd64/arm64
+compose*.yaml               Editor, Linux USB and Linux Bluetooth configurations
+docs/docker.md              Docker installation and publishing guide
+scripts/                    Disposable container integration checks
 static/                     Browser editor, styles and bundled font/JavaScript assets
 tests/                      Application and automatic-sizing tests
 vendor/qutie-linux/         Pinned upstream Qutie implementation and its license

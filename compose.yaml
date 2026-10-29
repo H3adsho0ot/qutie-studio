@@ -1,0 +1,23 @@
+services:
+  qutie:
+    image: ghcr.io/h3adsho0ot/qutie-studio:latest
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${QUTIE_BIND_ADDRESS:-127.0.0.1}:${QUTIE_PORT:-8765}:8765"
+    environment:
+      QUTIE_TRANSPORT: usb
+      QUTIE_DATA: /data
+    volumes:
+      - qutie-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 75s
+
+volumes:
+  qutie-data:

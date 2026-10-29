@@ -1,0 +1,24 @@
+# Standalone Linux-only configuration, not an override for compose.yaml.
+services:
+  qutie:
+    image: ghcr.io/h3adsho0ot/qutie-studio:latest
+    init: true
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      QUTIE_TRANSPORT: bluetooth
+      QUTIE_MAC: "${QUTIE_MAC:?Set QUTIE_MAC to your printer Bluetooth address}"
+      QUTIE_DATA: /data
+    volumes:
+      - qutie-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 75s
+
+volumes:
+  qutie-data:
