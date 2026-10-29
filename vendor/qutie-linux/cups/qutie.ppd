@@ -1,0 +1,117 @@
+*PPD-Adobe: "4.3"
+*FormatVersion: "4.3"
+*FileVersion: "0.1"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName: "QUTIE.PPD"
+*Manufacturer: "PRT"
+*Product: "(Qutie)"
+*ModelName: "Qutie"
+*ShortNickName: "PRT Qutie"
+*NickName: "PRT Qutie label printer (Bluetooth)"
+*PSVersion: "(3010.000) 0"
+*1284DeviceID: "MFG:PRT;MDL:Qutie;CLS:PRINTER;"
+*cupsVersion: 2.0
+*cupsModelNumber: 1
+*cupsManualCopies: True
+*cupsFilter: "application/vnd.cups-raster 0 rastertoqutie"
+*ColorDevice: False
+*DefaultColorSpace: Gray
+*LanguageLevel: "3"
+*FileSystem: False
+*Throughput: "1"
+*TTRasterizer: Type42
+*cupsLanguages: "en"
+
+*OpenUI *ColorModel/Color Mode: PickOne
+*OrderDependency: 10 AnySetup *ColorModel
+*DefaultColorModel: Gray
+*ColorModel Gray/Grayscale: "<</cupsColorSpace 0/cupsColorOrder 0/cupsBitsPerColor 8>>setpagedevice"
+*ColorModel Black/Black and white: "<</cupsColorSpace 0/cupsColorOrder 0/cupsBitsPerColor 1>>setpagedevice"
+*CloseUI: *ColorModel
+
+*OpenUI *Resolution/Resolution: PickOne
+*OrderDependency: 20 AnySetup *Resolution
+*DefaultResolution: 203dpi
+*Resolution 203dpi/203 dpi: "<</HWResolution[203 203]>>setpagedevice"
+*CloseUI: *Resolution
+
+*OpenUI *PageSize/Label size: PickOne
+*OrderDependency: 30 AnySetup *PageSize
+*DefaultPageSize: 12x30mm
+*PageSize 12x20mm/12 x 20 mm: "<</PageSize[34 57]/ImagingBBox null>>setpagedevice"
+*PageSize 12x30mm/12 x 30 mm: "<</PageSize[34 85]/ImagingBBox null>>setpagedevice"
+*PageSize 12x40mm/12 x 40 mm: "<</PageSize[34 113]/ImagingBBox null>>setpagedevice"
+*PageSize 12x50mm/12 x 50 mm: "<</PageSize[34 142]/ImagingBBox null>>setpagedevice"
+*PageSize 12x75mm/12 x 75 mm: "<</PageSize[34 213]/ImagingBBox null>>setpagedevice"
+*PageSize 12x100mm/12 x 100 mm: "<</PageSize[34 283]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageSize
+
+*OpenUI *PageRegion/Label size: PickOne
+*OrderDependency: 40 AnySetup *PageRegion
+*DefaultPageRegion: 12x30mm
+*PageRegion 12x20mm/12 x 20 mm: "<</PageSize[34 57]/ImagingBBox null>>setpagedevice"
+*PageRegion 12x30mm/12 x 30 mm: "<</PageSize[34 85]/ImagingBBox null>>setpagedevice"
+*PageRegion 12x40mm/12 x 40 mm: "<</PageSize[34 113]/ImagingBBox null>>setpagedevice"
+*PageRegion 12x50mm/12 x 50 mm: "<</PageSize[34 142]/ImagingBBox null>>setpagedevice"
+*PageRegion 12x75mm/12 x 75 mm: "<</PageSize[34 213]/ImagingBBox null>>setpagedevice"
+*PageRegion 12x100mm/12 x 100 mm: "<</PageSize[34 283]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageRegion
+
+*DefaultImageableArea: 12x30mm
+*ImageableArea 12x20mm/12 x 20 mm: "0 0 34 57"
+*ImageableArea 12x30mm/12 x 30 mm: "0 0 34 85"
+*ImageableArea 12x40mm/12 x 40 mm: "0 0 34 113"
+*ImageableArea 12x50mm/12 x 50 mm: "0 0 34 142"
+*ImageableArea 12x75mm/12 x 75 mm: "0 0 34 213"
+*ImageableArea 12x100mm/12 x 100 mm: "0 0 34 283"
+*DefaultPaperDimension: 12x30mm
+*PaperDimension 12x20mm/12 x 20 mm: "34 57"
+*PaperDimension 12x30mm/12 x 30 mm: "34 85"
+*PaperDimension 12x40mm/12 x 40 mm: "34 113"
+*PaperDimension 12x50mm/12 x 50 mm: "34 142"
+*PaperDimension 12x75mm/12 x 75 mm: "34 213"
+*PaperDimension 12x100mm/12 x 100 mm: "34 283"
+
+*MaxMediaWidth: "34"
+*MaxMediaHeight: "1700"
+*HWMargins: 0 0 0 0
+*CustomPageSize True: "pop pop pop <</PageSize[5 -2 roll]/ImagingBBox null>>setpagedevice"
+*ParamCustomPageSize Width: 1 points 34 34
+*ParamCustomPageSize Height: 2 points 28 1700
+*ParamCustomPageSize WidthOffset: 3 points 0 0
+*ParamCustomPageSize HeightOffset: 4 points 0 0
+*ParamCustomPageSize Orientation: 5 int 0 0
+
+*OpenUI *QutieDensity/Print Density: PickOne
+*OrderDependency: 50 AnySetup *QutieDensity
+*DefaultQutieDensity: 75
+*QutieDensity 40/Light: ""
+*QutieDensity 60/Lighter: ""
+*QutieDensity 75/Normal: ""
+*QutieDensity 100/Darker: ""
+*QutieDensity 130/Dark: ""
+*QutieDensity 170/Darkest: ""
+*CloseUI: *QutieDensity
+
+*OpenUI *QutieMedia/Label Stock: PickOne
+*OrderDependency: 60 AnySetup *QutieMedia
+*DefaultQutieMedia: Continuous
+*QutieMedia Continuous/Continuous (fixed feed after print): ""
+*QutieMedia Gap/Labels (feed to next label): ""
+*CloseUI: *QutieMedia
+
+*OpenUI *QutieFeed/Feed After Print (continuous stock): PickOne
+*OrderDependency: 70 AnySetup *QutieFeed
+*DefaultQutieFeed: 14
+*QutieFeed 0/0 mm: ""
+*QutieFeed 2/2 mm: ""
+*QutieFeed 4/4 mm: ""
+*QutieFeed 6/6 mm: ""
+*QutieFeed 8/8 mm: ""
+*QutieFeed 10/10 mm: ""
+*QutieFeed 14/14 mm: ""
+*QutieFeed 20/20 mm: ""
+*CloseUI: *QutieFeed
+
+*% End of PPD

@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "label": {
+    "length_mm": 50.0,
+    "density": 75,
+    "copies": 1,
+    "feed_mm": 14.0,
+    "rotation": 270
+  },
+  "elements": [
+    {
+      "id": "85570c746768",
+      "x": 0.25,
+      "y": 0.25,
+      "w": 49.5,
+      "h": 11.5,
+      "rotation": 0.0,
+      "shape": "rect",
+      "stroke_mm": 0.5,
+      "fill": false,
+      "kind": "shape"
+    },
+    {
+      "id": "750038c5ea73",
+      "x": 2,
+      "y": 1.5,
+      "w": 26,
+      "h": 9,
+      "rotation": 0.0,
+      "text": "FAB \u2192",
+      "font": "DejaVu Sans",
+      "size_pt": 16,
+      "bold": true,
+      "italic": false,
+      "underline": false,
+      "align": "left",
+      "line_spacing": 1.0,
+      "inverse": false,
+      "kind": "text"
+    },
+    {
+      "id": "f16ce2f9960d",
+      "x": 32,
+      "y": 1,
+      "w": 10,
+      "h": 10,
+      "rotation": 0.0,
+      "data": "https://example.org/qutie",
+      "ecc": "M",
+      "kind": "qr"
+    },
+    {
+      "id": "16ae809c075e",
+      "x": 43,
+      "y": 1.5,
+      "w": 6,
+      "h": 9,
+      "rotation": 0.0,
+      "text": "12",
+      "font": "DejaVu Sans",
+      "size_pt": 12,
+      "bold": true,
+      "italic": false,
+      "underline": false,
+      "align": "center",
+      "line_spacing": 1.0,
+      "inverse": false,
+      "kind": "text"
+    }
+  ]
+}

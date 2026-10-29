@@ -1,0 +1,56 @@
+# Local application data: templates, uploaded images, jobs and print rasters
+/data/
+/.local/
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite*-journal
+*.sqlite*-wal
+*.sqlite*-shm
+
+# Credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+*.local.env
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Python environments, generated files and test output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Logs, working screenshots and local release archives
+*.log
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.zip
+/artifacts/
+/.publish/
+
+# Editor, operating-system and assistant state
+.vscode/
+.idea/
+.codex/
+.agents/
+.codex-remote-attachments/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.bak

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Qutie Label Designer
+Comment=Design and print labels for the PRT Qutie Bluetooth label printer
+Exec=qutie-designer %f
+Icon=printer
+Terminal=false
+Categories=Graphics;Office;
