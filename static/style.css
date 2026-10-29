@@ -102,3 +102,5 @@ header{position:sticky;top:0;z-index:100;gap:22px;height:auto;min-height:82px;pa
 .measure{display:flex;justify-content:center;max-width:none}.measure-controls{flex-shrink:0;white-space:nowrap}.measure .measure-controls .feed-summary{margin-left:5px;padding-left:12px;border-left:1px solid var(--border);color:var(--muted)}.tape{display:flex}#canvas{flex:none}.feed-margin{position:relative;flex:none;width:224px}.feed-margin::before{content:'';position:absolute;left:0;top:-24px;bottom:-24px;border-left:1px dashed var(--feed-edge)}
 
 input,textarea{color:var(--text)}input[type=number],textarea,dialog input{background:var(--field)}dialog{background:var(--surface);color:var(--text)}:root{scrollbar-color:var(--border-strong) var(--page)}#canvas{color-scheme:light}
+
+.tools .tool-icon{display:inline-flex;align-items:center;justify-content:center;width:40px;min-height:38px;padding:8px}.tool-icon:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
