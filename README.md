@@ -27,7 +27,7 @@ already available locally. The interface is in English.
 
 ## Features
 
-- Text, PNG/JPEG images, QR codes, lines and frames.
+- Text with bold, italic or combined styles, PNG/JPEG images, QR codes, lines and frames.
 - Move, resize, rotate, duplicate and remove elements; undo and redo.
 - Separate horizontal/vertical centering and front/back layer controls.
 - Adjustable label length, or Auto sizing that follows the content.
@@ -106,6 +106,8 @@ Always run a **single worker**, which owns the print queue and printer lock.
 1. Start a new template or open a saved one. Add elements using the toolbar.
 2. Select an element to edit its properties on the right. Drag to move it; use
    handles to resize or rotate it. Hover over an icon to see its action.
+   For text, **B** toggles bold and **I** toggles italic; both can be combined.
+   Styles are saved with the template and appear in the actual print raster.
 3. Set the print width above the label. Here, width means the label's length
    along the tape feed direction; the tape itself remains 15 mm wide.
 4. New labels use **Auto**. It fits all content, including rotated bounds and

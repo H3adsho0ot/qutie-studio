@@ -19,7 +19,7 @@ def png():
 
 def test_template_roundtrip_and_delete():
     with TestClient(app.app) as c:
-        doc = {'version':1,'length':40,'nodes':[{'type':'Text','attrs':{'text':'Größe ÄÖÜ'}}]}
+        doc = {'version':1,'length':40,'nodes':[{'type':'Text','attrs':{'text':'Größe ÄÖÜ','fontStyle':'bold italic'}}]}
         assert c.put('/api/templates/test',json={'name':'Küche','document':doc}).status_code == 200
         assert c.get('/api/templates/test').json()['document'] == doc
         assert any(t['name']=='Küche' for t in c.get('/api/templates').json())

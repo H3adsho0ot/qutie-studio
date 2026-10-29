@@ -1,4 +1,5 @@
 const $=id=>document.getElementById(id);
+const labelFontsReady=Promise.all(['normal 400','normal 700','italic 400','italic 700'].map(style=>document.fonts.load(style+' 16px Noto')));
 const stage=new Konva.Stage({container:'canvas',width:640,height:192});
 const layer=new Konva.Layer();stage.add(layer);
 const rasterLayer=new Konva.Layer({listening:false,imageSmoothingEnabled:false});stage.add(rasterLayer);
@@ -29,7 +30,7 @@ async function renderEditor(){
   const version=revision,epoch=renderEpoch;
   let url=null;
   try{
-    await document.fonts.ready;
+    await labelFontsReady;
     const body={image:layer.toDataURL({x:0,y:0,width:stage.width(),height:stage.height(),pixelRatio:.5}),length_mm:Number($('length').value),threshold:Number($('threshold').value),dither:$('dither').checked,length_scale:Number($('lengthScale').value)};
     const response=await fetch('/api/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!response.ok){const error=await response.json();throw Error(typeof error.detail==='string'?error.detail:'Could not create the print view.')}
@@ -62,6 +63,8 @@ function select(n){
   const stroked=type==='Rect'||type==='Line';
   $('contentField').hidden=!(text||qr);
   $('fontSizeField').hidden=!text;
+  $('fontStyleField').hidden=!text;
+  for(const style of ['bold','italic'])$(style).setAttribute('aria-pressed',String(text&&n.fontStyle().split(/\s+/).includes(style)));
   $('strokeWidthField').hidden=!stroked;
   $('contentLabel').textContent=qr?'QR content':'Text';
   $('elementTitle').textContent=!n?'Selected element':qr?'QR code':({Text:'Text',Image:'Image',Rect:'Frame',Line:'Line'}[type]||'Selected element');
@@ -104,7 +107,15 @@ $('settingsDialog').addEventListener('click',event=>{
   if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)$('settingsDialog').close();
 });
 
-action('text',()=>add(new Konva.Text({x:24,y:50,text:'Your text',fontFamily:'Noto',fontSize:48,fill:'#000',padding:2})));
+action('text',async()=>{await labelFontsReady;add(new Konva.Text({x:24,y:50,text:'Your text',fontFamily:'Noto',fontSize:48,fill:'#000',padding:2}))});
+for(const style of ['bold','italic'])action(style,async()=>{
+  await labelFontsReady;
+  if(selected?.getClassName()!=='Text')return;
+  const styles=new Set(selected.fontStyle().split(/\s+/));
+  if(styles.has(style))styles.delete(style);else styles.add(style);
+  selected.fontStyle(['bold','italic'].filter(value=>styles.has(value)).join(' ')||'normal');
+  record();select(selected);
+});
 action('rect',()=>add(new Konva.Rect({x:20,y:20,width:240,height:150,stroke:'#000',strokeWidth:2})));
 action('line',()=>add(new Konva.Line({x:25,y:96,points:[0,0,220,0],stroke:'#000',strokeWidth:2})));
 action('qr',async()=>{const text=await ask('QR content','https://example.org');if(text)await imageNode(await qrSource(text),{width:176,height:176,y:8,qrText:text})});
@@ -260,4 +271,4 @@ async function refreshPrinter(){
 }
 (async function pollPrinter(){await refreshPrinter();setTimeout(pollPrinter,30000)})();
 document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.key==='Delete')$('remove').click();if(e.ctrlKey&&e.key==='z'){e.preventDefault();$(e.shiftKey?'redo':'undo').click()}});
-(async()=>{await document.fonts.ready;await restore({version:1,autoLength:true,manualLength:40,length:40,nodes:[{type:'Text',attrs:{x:30,y:53,text:'Everything in its place.',fontFamily:'Noto',fontSize:44,fill:'#000'}}]});await listTemplates();await refreshJobs();setInterval(()=>refreshJobs().catch(()=>{}),2500)})().catch(e=>notice(e.message,true));
+(async()=>{await labelFontsReady;await restore({version:1,autoLength:true,manualLength:40,length:40,nodes:[{type:'Text',attrs:{x:30,y:53,text:'Everything in its place.',fontFamily:'Noto',fontSize:44,fill:'#000'}}]});await listTemplates();await refreshJobs();setInterval(()=>refreshJobs().catch(()=>{}),2500)})().catch(e=>notice(e.message,true));
