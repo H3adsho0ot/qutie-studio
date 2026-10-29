@@ -129,6 +129,12 @@ The **gear next to the battery** opens Tape & print settings:
 | Black threshold | 160 | Controls conversion to black and white |
 | Dither photos | Off | Uses dithering for grayscale images |
 
+The feed amount is also shown next to the width controls above the label. A
+hatched extension to the right visualizes that additional blank tape at the same
+scale as the editor. It updates with the Feed after printing setting and disappears
+at 0 mm. The extension is outside the print raster and does not affect Auto sizing,
+element positioning or the printable width.
+
 Length correction formula: `current factor × target length / measured length`.
 It does not change the physical print-head width or final feed.
 

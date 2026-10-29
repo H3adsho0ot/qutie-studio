@@ -87,7 +87,14 @@ function resize(){
   }else{layer.x(0)}
   $('length').value=length;$('length').disabled=autoLength;
   $('autoLength').setAttribute('aria-pressed',String(autoLength));
-  stage.width(length*16);document.querySelector('.measure').style.width=stage.width()+'px';
+  stage.width(length*16);
+  const feed=Math.max(0,Math.min(30,Number($('feed').value)||0));
+  $('feed').value=feed;
+  $('feedSummary').textContent='+ '+feed+' mm feed';
+  $('feedMargin').style.width=feed*16+'px';
+  $('feedMargin').hidden=feed===0;
+  $('feedMargin').setAttribute('aria-label',feed+' mm blank feed after printing');
+  document.querySelector('.measure').style.width=stage.width()+feed*16+'px';
   if(autoOverflow){notice('The content including margins exceeds 80 mm. Please reduce its size.',true);sizeError=true}
   else if(sizeError){notice('');sizeError=false}
   layer.draw();selectionLayer.batchDraw();
