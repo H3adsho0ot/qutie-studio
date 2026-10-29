@@ -6,7 +6,33 @@ const rasterLayer=new Konva.Layer({listening:false,imageSmoothingEnabled:false})
 const rasterNode=new Konva.Image({listening:false});rasterLayer.add(rasterNode);
 const selectionLayer=new Konva.Layer();stage.add(selectionLayer);
 const tr=new Konva.Transformer({rotateEnabled:true,keepRatio:false,enabledAnchors:['top-left','top-right','bottom-left','bottom-right']});selectionLayer.add(tr);
-let selected=null,templateId=crypto.randomUUID(),history=[],historyIndex=-1,restoring=false,revision=0,currentPrintId=null,lastPrintState=null,printSubmitting=false;
+let selected=null,lineDrag=null,templateId=crypto.randomUUID(),history=[],historyIndex=-1,restoring=false,revision=0,currentPrintId=null,lastPrintState=null,printSubmitting=false;
+const lineHandles=[0,1].map(index=>{
+  const handle=new Konva.Circle({radius:5,fill:'#fff',stroke:'#0099dd',strokeWidth:1.5,hitStrokeWidth:12,draggable:true,visible:false});
+  selectionLayer.add(handle);
+  handle.on('click tap',event=>{event.cancelBubble=true});
+  handle.on('dragstart',event=>{
+    event.cancelBubble=true;
+    if(!isStraightLine(selected))return;
+    const transform=selected.getAbsoluteTransform(),inverse=layer.getAbsoluteTransform().copy().invert(),points=selected.points();
+    lineDrag={node:selected,endpoints:[0,2].map(i=>inverse.point(transform.point({x:points[i],y:points[i+1]})))};
+  });
+  handle.on('dragmove',event=>{
+    event.cancelBubble=true;
+    if(!lineDrag)return;
+    const endpoints=lineDrag.endpoints.slice();
+    endpoints[index]=layer.getAbsoluteTransform().copy().invert().point(handle.getAbsolutePosition());
+    lineDrag.node.setAttrs(LineGeometry.between(...endpoints));
+    $('rotation').value=Math.round(lineDrag.node.rotation()*100)/100;
+    invalidate();
+  });
+  handle.on('dragend',event=>{
+    event.cancelBubble=true;
+    if(!lineDrag)return;
+    const node=lineDrag.node;lineDrag=null;record();select(node);
+  });
+  return handle;
+});
 let renderTimer=null,renderRunning=false,rendered=null,renderEpoch=0,renderError=false;
 let autoLength=false,manualLength=40,autoOverflow=false,sizeError=false;
 const notice=(text,error=false)=>{$('notice').textContent=text;$('notice').classList.toggle('error',error)};
@@ -44,7 +70,7 @@ async function renderEditor(){
     rasterLayer.draw();
     if(version===revision){
       rendered={version,body,digest};$('canvas').setAttribute('aria-busy','false');
-      $('print').disabled=printSubmitting||printerBusy||autoOverflow;
+      $('print').disabled=!!lineDrag||printSubmitting||printerBusy||autoOverflow;
       if(renderError){notice('');renderError=false}
     }
   }catch(e){if(epoch===renderEpoch&&version===revision){rendered=null;renderError=true;notice('Print view unavailable: '+e.message,true)}}
@@ -56,8 +82,18 @@ async function renderEditor(){
 }
 function doc(){return {version:1,autoLength,manualLength,lengthScale:Number($('lengthScale').value),length:Number($('length').value),feed:Number($('feed').value),threshold:Number($('threshold').value),dither:$('dither').checked,nodes:nodes().map(n=>({type:n.getClassName(),attrs:{...n.getAttrs(),image:undefined}}))}}
 function record(){invalidate();if(restoring)return;history=history.slice(0,historyIndex+1);history.push(JSON.stringify(doc()));historyIndex=history.length-1;$('undo').disabled=historyIndex<1;$('redo').disabled=true}
+function isStraightLine(node){return node?.getClassName()==='Line'&&!node.closed()&&node.points().length===4}
+function syncLineHandles(){
+  const line=isStraightLine(selected),points=line?selected.points():[];
+  lineHandles.forEach((handle,index)=>{
+    handle.visible(line);
+    if(line)handle.absolutePosition(selected.getAbsoluteTransform().point({x:points[index*2],y:points[index*2+1]}));
+  });
+}
 function select(n){
-  selected=n;tr.nodes(n?[n]:[]);$('elementProps').hidden=!n;$('selectionHint').hidden=!!n;
+  if(lineDrag&&n!==lineDrag.node){lineDrag=null;lineHandles.forEach(handle=>handle.stopDrag())}
+  selected=n;tr.nodes(n&&!isStraightLine(n)?[n]:[]);$('elementProps').hidden=!n;$('selectionHint').hidden=!!n;
+  syncLineHandles();
   const type=n?.getClassName();
   const text=type==='Text',qr=type==='Image'&&n.getAttr('qrText')!==undefined;
   const stroked=type==='Rect'||type==='Line';
@@ -72,19 +108,21 @@ function select(n){
     $('content').value=qr?n.getAttr('qrText'):text?n.text():'';
     if(text)$('fontSize').value=n.fontSize()/2;
     if(stroked)$('strokeWidth').value=n.strokeWidth();
-    $('rotation').value=n.rotation();
+    $('rotation').value=Math.round(n.rotation()*100)/100;
   }
   selectionLayer.batchDraw();layer.batchDraw();
 }
 async function hydrate(n){if(n.getClassName()==='Image'){let image=new Image();image.src=n.getAttr('src');await image.decode();n.image(image)}}
-function wire(n){n.draggable(true);n.on('click tap',()=>select(n));n.on('dragmove transform',invalidate);n.on('dragend transformend',()=>{record();select(n)})}
+function wire(n){if(n.getClassName()==='Line')n.strokeScaleEnabled(false);n.draggable(true);n.on('click tap',()=>select(n));n.on('dragmove transform',invalidate);n.on('dragend transformend',()=>{record();select(n)})}
 function resize(){
   let length=Math.max(10,Math.min(80,Number($('length').value)||40));
   autoOverflow=false;
-  if(autoLength){
+  // Keep the canvas origin stable while an endpoint follows the pointer.
+  // Refit Auto width on release instead of moving the other endpoint mid-drag.
+  if(autoLength&&!lineDrag){
     const fit=LabelSize.fit(nodes().map(n=>n.getClientRect({relativeTo:layer})));
     length=fit.lengthMm;autoOverflow=fit.overflow;layer.x(fit.offsetX);
-  }else{layer.x(0)}
+  }else if(!autoLength){layer.x(0)}
   $('length').value=length;$('length').disabled=autoLength;
   $('autoLength').setAttribute('aria-pressed',String(autoLength));
   stage.width(length*16);
@@ -97,7 +135,7 @@ function resize(){
   document.querySelector('.measure').style.width=stage.width()+feed*16+'px';
   if(autoOverflow){notice('The content including margins exceeds 80 mm. Please reduce its size.',true);sizeError=true}
   else if(sizeError){notice('');sizeError=false}
-  layer.draw();selectionLayer.batchDraw();
+  syncLineHandles();layer.draw();selectionLayer.batchDraw();
 }
 async function restore(d,track=true){if(d.version!==1||!Array.isArray(d.nodes)||d.nodes.length>200)throw Error('Invalid template format');restoring=true;renderEpoch++;rendered=null;rasterNode.image(null);rasterLayer.draw();try{nodes().forEach(n=>n.destroy());select(null);for(const key of ['length','feed','threshold','lengthScale'])$(key).value=d[key]??({length:40,feed:14,threshold:160,lengthScale:100}[key]);$('dither').checked=!!d.dither;autoLength=!!d.autoLength;manualLength=Number(d.manualLength??d.length??40);resize();for(const item of d.nodes){if(!['Text','Image','Rect','Line'].includes(item.type))throw Error('Unknown element');const attrs={...item.attrs};if(item.type==='Image'&&!/^data:image\/(png|jpeg);base64,/.test(attrs.src||''))throw Error('Template contains an invalid image');let n=Konva.Node.create({className:item.type,attrs});await hydrate(n);wire(n);layer.add(n)}tr.moveToTop();layer.draw()}finally{restoring=false}invalidate();if(track)record()}
 function add(n){wire(n);layer.add(n);tr.moveToTop();select(n);record()}
@@ -232,7 +270,7 @@ action('new',async()=>{if(!await ask('Start a new draft? Unsaved changes will be
 action('import',()=>$('importFile').click());$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>10000000)throw Error('Template too large');const value=JSON.parse(await f.text());await restore(value.document);templateId=crypto.randomUUID();$('name').value=value.name||'Imported template';notice('Template imported. Save it to keep it.')}catch(e){notice(e.message,true)}finally{$('importFile').value=''}};
 action('print',async()=>{
   const snapshot=rendered;
-  if(printSubmitting||autoOverflow||!snapshot||snapshot.version!==revision)return;
+  if(lineDrag||printSubmitting||autoOverflow||!snapshot||snapshot.version!==revision)return;
   printSubmitting=true;$('print').disabled=true;
   try{
     const preview=await api('/api/previews',{method:'POST',body:JSON.stringify(snapshot.body)});
@@ -241,12 +279,12 @@ action('print',async()=>{
     const job=await api('/api/jobs',{method:'POST',body:JSON.stringify({preview_id:preview.id,feed_mm:Number($('feed').value),request_id:crypto.randomUUID()})});
     currentPrintId=job.id;lastPrintState=null;notice('Processing print job …');await refreshJobs();
   }catch(e){notice('The print job could not be confirmed. Check the label before printing again. '+e.message,true)}
-  finally{printSubmitting=false;$('print').disabled=autoOverflow||!rendered||rendered.version!==revision||printerBusy}
+  finally{printSubmitting=false;$('print').disabled=!!lineDrag||autoOverflow||!rendered||rendered.version!==revision||printerBusy}
 });
 async function refreshJobs(){
   const jobs=await api('/api/jobs');
   const busy=jobs.some(j=>['queued','printing'].includes(j.state));
-  $('print').disabled=autoOverflow||busy||printSubmitting||!rendered||rendered.version!==revision;
+  $('print').disabled=!!lineDrag||autoOverflow||busy||printSubmitting||!rendered||rendered.version!==revision;
   if(busy!==printerBusy){printerBusy=busy;if(busy)showPrinter({...lastPrinterStatus,busy:true,ready:false});else refreshPrinter()}
   const current=jobs.find(j=>j.id===currentPrintId);
   if(current&&current.state!==lastPrintState){

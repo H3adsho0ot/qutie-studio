@@ -42,6 +42,7 @@ dist/
 /*.zip
 /artifacts/
 /.publish/
+/static/.qa/
 /backups/
 *.tar.gz
 *.tgz

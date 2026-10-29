@@ -30,12 +30,18 @@ already available locally. The interface is in English.
 - Text with bold, italic or combined styles, PNG/JPEG images, QR codes, lines and frames.
 - Move, resize, rotate, duplicate and remove elements; undo and redo.
 - Separate horizontal/vertical centering and front/back layer controls.
+- Straight lines have two endpoint handles for length and direction; set thickness in the object's Line width field.
 - Adjustable label length, or Auto sizing that follows the content.
 - The actual monochrome print raster is displayed directly in the editor.
 - Named templates with embedded images, JSON import/export and duplication.
 - Automatic printer status with model, firmware, readiness and battery level.
 - Sequential print jobs; uncertain jobs are never retried automatically.
 - Local fonts and JavaScript assets, with no CDN requests.
+- Automatic light/dark appearance following the system setting, including live changes.
+
+The interface follows `prefers-color-scheme` without a separate theme setting.
+The label itself stays white with its actual monochrome print content in both modes;
+changing the interface theme does not change templates or print data.
 
 ## Printer compatibility
 
@@ -302,7 +308,7 @@ Install development dependencies into the same virtual environment:
 python -m pip install -r requirements-dev.txt
 python -m pytest tests -q
 node --check static/app.js
-node --test tests/test_label_size.cjs
+node --test tests/test_label_size.cjs tests/test_line_geometry.cjs
 ```
 
 On Windows, use `.\.venv\Scripts\python.exe` if the environment is not activated.
@@ -313,6 +319,8 @@ Tests use temporary data and a simulated printer. They cover template persistenc
 image validation, raster geometry, identical editor/print bytes, status caching,
 queue deduplication and failure without automatic replay. Size tests cover empty
 and short labels, multiple elements, rotated/negative bounds, rounding and overflow.
+Line tests cover both endpoints, rotation, existing scale/offsets, layer translation
+and preservation of the configured stroke width.
 They do not replace a physical hardware test.
 
 ### Optional physical calibration
