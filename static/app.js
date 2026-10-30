@@ -94,7 +94,7 @@ function syncLineHandles(){
 function select(n){
   if(objectDrag&&n!==objectDrag.node){const node=objectDrag.node;objectDrag=null;node.stopDrag();clearSnapGuides()}
   if(lineDrag&&n!==lineDrag.node){lineDrag=null;lineHandles.forEach(handle=>handle.stopDrag())}
-  selected=n;tr.nodes(n&&!isStraightLine(n)?[n]:[]);$('elementProps').hidden=!n;$('selectionHint').hidden=!!n;
+  selected=n;tr.keepRatio(n?.getClassName()==='Text');tr.nodes(n&&!isStraightLine(n)?[n]:[]);$('elementProps').hidden=!n;$('selectionHint').hidden=!!n;
   syncLineHandles();
   const type=n?.getClassName();
   const text=type==='Text',qr=type==='Image'&&n.getAttr('qrText')!==undefined;

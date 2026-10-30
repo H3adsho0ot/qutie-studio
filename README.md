@@ -114,6 +114,7 @@ Always run a **single worker**, which owns the print queue and printer lock.
    handles to resize or rotate it. Hover over an icon to see its action.
    For text, **B** toggles bold and **I** toggles italic; both can be combined.
    Styles are saved with the template and appear in the actual print raster.
+   Text always keeps its aspect ratio when resized with the corner handles.
    Moving elements snap to label edges, centres and other elements within 6 editor
    pixels. Pink guides show the alignment; hold **Alt** to move freely. Guides are
    never printed. Auto width refits after you release the element.
