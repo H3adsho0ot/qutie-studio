@@ -6,7 +6,7 @@ const rasterLayer=new Konva.Layer({listening:false,imageSmoothingEnabled:false})
 const rasterNode=new Konva.Image({listening:false});rasterLayer.add(rasterNode);
 const selectionLayer=new Konva.Layer();stage.add(selectionLayer);
 const tr=new Konva.Transformer({rotateEnabled:true,keepRatio:false,enabledAnchors:['top-left','top-right','bottom-left','bottom-right']});selectionLayer.add(tr);
-let selected=null,lineDrag=null,templateId=crypto.randomUUID(),history=[],historyIndex=-1,restoring=false,revision=0,currentPrintId=null,lastPrintState=null,printSubmitting=false;
+let selected=null,lineDrag=null,templateId=BrowserId.create(),history=[],historyIndex=-1,restoring=false,revision=0,currentPrintId=null,lastPrintState=null,printSubmitting=false;
 const lineHandles=[0,1].map(index=>{
   const handle=new Konva.Circle({radius:5,fill:'#fff',stroke:'#0099dd',strokeWidth:1.5,hitStrokeWidth:12,draggable:true,visible:false});
   selectionLayer.add(handle);
@@ -214,13 +214,13 @@ async function templateAction(item,operation){
   if(operation==='delete'){
     if(!await ask('Delete template “'+item.name+'”?'))return;
     await api('/api/templates/'+item.id,{method:'DELETE'});
-    if(templateId===item.id)templateId=crypto.randomUUID();
+    if(templateId===item.id)templateId=BrowserId.create();
     await listTemplates();notice('Template deleted. Your current draft has been kept.');
     return;
   }
   const value=await api('/api/templates/'+item.id);
   if(operation==='export'){downloadTemplate(value);return}
-  await api('/api/templates/'+crypto.randomUUID(),{method:'PUT',body:JSON.stringify({name:value.name+' – Copy',document:value.document})});
+  await api('/api/templates/'+BrowserId.create(),{method:'PUT',body:JSON.stringify({name:value.name+' – Copy',document:value.document})});
   await listTemplates();notice('Template copy created.');
 }
 async function listTemplates(){
@@ -266,8 +266,8 @@ async function listTemplates(){
 }
 async function save(){await api('/api/templates/'+templateId,{method:'PUT',body:JSON.stringify({name:$('name').value,document:doc()})});await listTemplates();notice('Template saved on the server.')}
 action('save',save);
-action('new',async()=>{if(!await ask('Start a new draft? Unsaved changes will be lost.'))return;await restore({version:1,autoLength:true,manualLength:40,length:40,nodes:[]});templateId=crypto.randomUUID();$('name').value='New template';history=[JSON.stringify(doc())];historyIndex=0});
-action('import',()=>$('importFile').click());$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>10000000)throw Error('Template too large');const value=JSON.parse(await f.text());await restore(value.document);templateId=crypto.randomUUID();$('name').value=value.name||'Imported template';notice('Template imported. Save it to keep it.')}catch(e){notice(e.message,true)}finally{$('importFile').value=''}};
+action('new',async()=>{if(!await ask('Start a new draft? Unsaved changes will be lost.'))return;await restore({version:1,autoLength:true,manualLength:40,length:40,nodes:[]});templateId=BrowserId.create();$('name').value='New template';history=[JSON.stringify(doc())];historyIndex=0});
+action('import',()=>$('importFile').click());$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>10000000)throw Error('Template too large');const value=JSON.parse(await f.text());await restore(value.document);templateId=BrowserId.create();$('name').value=value.name||'Imported template';notice('Template imported. Save it to keep it.')}catch(e){notice(e.message,true)}finally{$('importFile').value=''}};
 action('print',async()=>{
   const snapshot=rendered;
   if(lineDrag||printSubmitting||autoOverflow||!snapshot||snapshot.version!==revision)return;
@@ -276,7 +276,7 @@ action('print',async()=>{
     const preview=await api('/api/previews',{method:'POST',body:JSON.stringify(snapshot.body)});
     if(snapshot.version!==revision){notice('The draft changed. Please print the updated draft.');return}
     if(!snapshot.digest||preview.sha256!==snapshot.digest)throw Error('The print view does not match the print data. Please edit the draft again.');
-    const job=await api('/api/jobs',{method:'POST',body:JSON.stringify({preview_id:preview.id,feed_mm:Number($('feed').value),request_id:crypto.randomUUID()})});
+    const job=await api('/api/jobs',{method:'POST',body:JSON.stringify({preview_id:preview.id,feed_mm:Number($('feed').value),request_id:BrowserId.create()})});
     currentPrintId=job.id;lastPrintState=null;notice('Processing print job …');await refreshJobs();
   }catch(e){notice('The print job could not be confirmed. Check the label before printing again. '+e.message,true)}
   finally{printSubmitting=false;$('print').disabled=!!lineDrag||autoOverflow||!rendered||rendered.version!==revision||printerBusy}

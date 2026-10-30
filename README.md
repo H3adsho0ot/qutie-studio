@@ -308,7 +308,7 @@ Install development dependencies into the same virtual environment:
 python -m pip install -r requirements-dev.txt
 python -m pytest tests -q
 node --check static/app.js
-node --test tests/test_label_size.cjs tests/test_line_geometry.cjs
+node --test tests/test_label_size.cjs tests/test_line_geometry.cjs tests/test_browser_id.cjs
 ```
 
 On Windows, use `.\.venv\Scripts\python.exe` if the environment is not activated.
