@@ -114,6 +114,9 @@ Always run a **single worker**, which owns the print queue and printer lock.
    handles to resize or rotate it. Hover over an icon to see its action.
    For text, **B** toggles bold and **I** toggles italic; both can be combined.
    Styles are saved with the template and appear in the actual print raster.
+   Moving elements snap to label edges, centres and other elements within 6 editor
+   pixels. Pink guides show the alignment; hold **Alt** to move freely. Guides are
+   never printed. Auto width refits after you release the element.
 3. Set the print width above the label. Here, width means the label's length
    along the tape feed direction; the tape itself remains 15 mm wide.
 4. New labels use **Auto**. It fits all content, including rotated bounds and
@@ -308,7 +311,7 @@ Install development dependencies into the same virtual environment:
 python -m pip install -r requirements-dev.txt
 python -m pytest tests -q
 node --check static/app.js
-node --test tests/test_label_size.cjs tests/test_line_geometry.cjs tests/test_browser_id.cjs
+node --test tests/test_label_size.cjs tests/test_line_geometry.cjs tests/test_browser_id.cjs tests/test_snapping.cjs
 ```
 
 On Windows, use `.\.venv\Scripts\python.exe` if the environment is not activated.

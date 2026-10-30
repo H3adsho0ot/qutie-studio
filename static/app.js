@@ -5,8 +5,9 @@ const layer=new Konva.Layer();stage.add(layer);
 const rasterLayer=new Konva.Layer({listening:false,imageSmoothingEnabled:false});stage.add(rasterLayer);
 const rasterNode=new Konva.Image({listening:false});rasterLayer.add(rasterNode);
 const selectionLayer=new Konva.Layer();stage.add(selectionLayer);
+const snapGuides=new Konva.Group({listening:false});selectionLayer.add(snapGuides);
 const tr=new Konva.Transformer({rotateEnabled:true,keepRatio:false,enabledAnchors:['top-left','top-right','bottom-left','bottom-right']});selectionLayer.add(tr);
-let selected=null,lineDrag=null,templateId=BrowserId.create(),history=[],historyIndex=-1,restoring=false,revision=0,currentPrintId=null,lastPrintState=null,printSubmitting=false;
+let selected=null,lineDrag=null,objectDrag=null,templateId=BrowserId.create(),history=[],historyIndex=-1,restoring=false,revision=0,currentPrintId=null,lastPrintState=null,printSubmitting=false;
 const lineHandles=[0,1].map(index=>{
   const handle=new Konva.Circle({radius:5,fill:'#fff',stroke:'#0099dd',strokeWidth:1.5,hitStrokeWidth:12,draggable:true,visible:false});
   selectionLayer.add(handle);
@@ -70,7 +71,7 @@ async function renderEditor(){
     rasterLayer.draw();
     if(version===revision){
       rendered={version,body,digest};$('canvas').setAttribute('aria-busy','false');
-      $('print').disabled=!!lineDrag||printSubmitting||printerBusy||autoOverflow;
+      $('print').disabled=!!lineDrag||!!objectDrag||printSubmitting||printerBusy||autoOverflow;
       if(renderError){notice('');renderError=false}
     }
   }catch(e){if(epoch===renderEpoch&&version===revision){rendered=null;renderError=true;notice('Print view unavailable: '+e.message,true)}}
@@ -91,6 +92,7 @@ function syncLineHandles(){
   });
 }
 function select(n){
+  if(objectDrag&&n!==objectDrag.node){const node=objectDrag.node;objectDrag=null;node.stopDrag();clearSnapGuides()}
   if(lineDrag&&n!==lineDrag.node){lineDrag=null;lineHandles.forEach(handle=>handle.stopDrag())}
   selected=n;tr.nodes(n&&!isStraightLine(n)?[n]:[]);$('elementProps').hidden=!n;$('selectionHint').hidden=!!n;
   syncLineHandles();
@@ -113,13 +115,36 @@ function select(n){
   selectionLayer.batchDraw();layer.batchDraw();
 }
 async function hydrate(n){if(n.getClassName()==='Image'){let image=new Image();image.src=n.getAttr('src');await image.decode();n.image(image)}}
-function wire(n){if(n.getClassName()==='Line')n.strokeScaleEnabled(false);n.draggable(true);n.on('click tap',()=>select(n));n.on('dragmove transform',invalidate);n.on('dragend transformend',()=>{record();select(n)})}
+function clearSnapGuides(){snapGuides.destroyChildren();selectionLayer.batchDraw()}
+function snapObject(n,event){
+  clearSnapGuides();
+  if(!objectDrag||objectDrag.node!==n||event.evt?.altKey)return;
+  const result=Snapping.snap(n.getClientRect(),objectDrag.targets);
+  const position=n.absolutePosition();n.absolutePosition({x:position.x+result.dx,y:position.y+result.dy});
+  for(const guide of result.guides){
+    const points=guide.axis==='x'?[guide.position,0,guide.position,stage.height()]:[0,guide.position,stage.width(),guide.position];
+    snapGuides.add(new Konva.Line({points,stroke:'#dc3c87',strokeWidth:1,dash:[4,4],listening:false}));
+  }
+  selectionLayer.batchDraw();
+}
+function wire(n){
+  if(n.getClassName()==='Line')n.strokeScaleEnabled(false);
+  n.draggable(true);n.off('.editor');
+  n.on('click.editor tap.editor',()=>select(n));
+  n.on('dragstart.editor',()=>{
+    select(n);clearSnapGuides();
+    objectDrag={node:n,targets:Snapping.targets(stage.width(),stage.height(),nodes().filter(other=>other!==n).map(other=>other.getClientRect()))};
+    $('print').disabled=true;
+  });
+  n.on('dragmove.editor',event=>{snapObject(n,event);invalidate()});
+  n.on('transform.editor',()=>{clearSnapGuides();invalidate()});
+  n.on('dragend.editor transformend.editor',()=>{objectDrag=null;clearSnapGuides();record();select(n)});
+}
 function resize(){
   let length=Math.max(10,Math.min(80,Number($('length').value)||40));
   autoOverflow=false;
-  // Keep the canvas origin stable while an endpoint follows the pointer.
-  // Refit Auto width on release instead of moving the other endpoint mid-drag.
-  if(autoLength&&!lineDrag){
+  // Keep geometry and snap targets stable while dragging; refit Auto on release.
+  if(autoLength&&!lineDrag&&!objectDrag){
     const fit=LabelSize.fit(nodes().map(n=>n.getClientRect({relativeTo:layer})));
     length=fit.lengthMm;autoOverflow=fit.overflow;layer.x(fit.offsetX);
   }else if(!autoLength){layer.x(0)}
@@ -203,6 +228,7 @@ document.addEventListener('pointerdown',event=>{
   if(openTemplateMenu&&!openTemplateMenu.row.contains(event.target))closeTemplateMenu();
 });
 document.addEventListener('keydown',event=>{
+  if(event.key==='Alt')clearSnapGuides();
   if(event.key==='Escape'&&openTemplateMenu){event.preventDefault();closeTemplateMenu(true)}
 });
 function downloadTemplate(value){
@@ -270,7 +296,7 @@ action('new',async()=>{if(!await ask('Start a new draft? Unsaved changes will be
 action('import',()=>$('importFile').click());$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>10000000)throw Error('Template too large');const value=JSON.parse(await f.text());await restore(value.document);templateId=BrowserId.create();$('name').value=value.name||'Imported template';notice('Template imported. Save it to keep it.')}catch(e){notice(e.message,true)}finally{$('importFile').value=''}};
 action('print',async()=>{
   const snapshot=rendered;
-  if(lineDrag||printSubmitting||autoOverflow||!snapshot||snapshot.version!==revision)return;
+  if(lineDrag||objectDrag||printSubmitting||autoOverflow||!snapshot||snapshot.version!==revision)return;
   printSubmitting=true;$('print').disabled=true;
   try{
     const preview=await api('/api/previews',{method:'POST',body:JSON.stringify(snapshot.body)});
@@ -279,12 +305,12 @@ action('print',async()=>{
     const job=await api('/api/jobs',{method:'POST',body:JSON.stringify({preview_id:preview.id,feed_mm:Number($('feed').value),request_id:BrowserId.create()})});
     currentPrintId=job.id;lastPrintState=null;notice('Processing print job …');await refreshJobs();
   }catch(e){notice('The print job could not be confirmed. Check the label before printing again. '+e.message,true)}
-  finally{printSubmitting=false;$('print').disabled=!!lineDrag||autoOverflow||!rendered||rendered.version!==revision||printerBusy}
+  finally{printSubmitting=false;$('print').disabled=!!lineDrag||!!objectDrag||autoOverflow||!rendered||rendered.version!==revision||printerBusy}
 });
 async function refreshJobs(){
   const jobs=await api('/api/jobs');
   const busy=jobs.some(j=>['queued','printing'].includes(j.state));
-  $('print').disabled=!!lineDrag||autoOverflow||busy||printSubmitting||!rendered||rendered.version!==revision;
+  $('print').disabled=!!lineDrag||!!objectDrag||autoOverflow||busy||printSubmitting||!rendered||rendered.version!==revision;
   if(busy!==printerBusy){printerBusy=busy;if(busy)showPrinter({...lastPrinterStatus,busy:true,ready:false});else refreshPrinter()}
   const current=jobs.find(j=>j.id===currentPrintId);
   if(current&&current.state!==lastPrintState){

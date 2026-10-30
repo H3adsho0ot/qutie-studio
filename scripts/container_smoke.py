@@ -44,7 +44,7 @@ def main():
     document = {'version': 1, 'length': 10, 'nodes': []}
 
     if args.phase == 'write':
-        for path in ['/static/favicon.svg', '/static/app.js', '/static/browser-id.js', '/static/line-geometry.js', '/static/vendor/konva.min.js', '/static/fonts/NotoSans.ttf', '/static/fonts/NotoSans-Italic.ttf']:
+        for path in ['/static/favicon.svg', '/static/app.js', '/static/browser-id.js', '/static/snapping.js', '/static/line-geometry.js', '/static/vendor/konva.min.js', '/static/fonts/NotoSans.ttf', '/static/fonts/NotoSans-Italic.ttf']:
             assert request(path)[0], path
         data = {'image': base64.b64encode(image).decode(), 'length_mm': 10}
         raster, headers = request('/api/render', data)
